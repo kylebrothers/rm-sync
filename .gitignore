@@ -1,0 +1,24 @@
+# Secrets
+.env
+
+# Local cert / data dirs (lives on NAS in production, but useful guard)
+acme.json
+rmfakecloud-data/
+traefik-certs/
+
+# Python (for upcoming converter phase)
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Future config
+config.yml
