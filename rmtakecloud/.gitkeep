@@ -1,0 +1,6 @@
+# This directory is a placeholder. Persistent rmfakecloud data lives on the NAS
+# at /Docker/rm-sync/rmfakecloud-data, mounted via the rmfakecloud_data volume
+# defined in ../docker-compose.yml.
+#
+# If rmfakecloud-specific config files are needed in a later phase
+# (e.g. custom templates, branding), they will go here.
