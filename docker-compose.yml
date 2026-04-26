@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+
+  traefik:
+    image: traefik:v3.1
+    container_name: rm-sync-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - CF_DNS_API_TOKEN=${CF_API_TOKEN}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - ACME_CA=${ACME_CA}
+    volumes:
+      - ./reverse-proxy/traefik.yml:/etc/traefik/traefik.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_certs:/letsencrypt
+    networks:
+      - rm-sync-network
+
+  rmfakecloud:
+    image: ddvk/rmfakecloud:latest
+    container_name: rm-sync-rmfakecloud
+    restart: unless-stopped
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - STORAGE_URL=https://${RMFAKECLOUD_DOMAIN}
+    volumes:
+      - rmfakecloud_data:/data
+    networks:
+      - rm-sync-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=rm-sync-network"
+      - "traefik.http.routers.rmfakecloud.rule=Host(`${RMFAKECLOUD_DOMAIN}`)"
+      - "traefik.http.routers.rmfakecloud.entrypoints=websecure"
+      - "traefik.http.routers.rmfakecloud.tls=true"
+      - "traefik.http.routers.rmfakecloud.tls.certresolver=cloudflare"
+      - "traefik.http.services.rmfakecloud.loadbalancer.server.port=3000"
+    depends_on:
+      - traefik
+
+volumes:
+  rmfakecloud_data:
+    driver_opts:
+      type: nfs
+      device: ":/Docker/rm-sync/rmfakecloud-data"
+      o: nfsvers=4,addr=${NAS_IP:-192.168.0.134},nolock,soft,rw
+  traefik_certs:
+    driver_opts:
+      type: nfs
+      device: ":/Docker/rm-sync/traefik-certs"
+      o: nfsvers=4,addr=${NAS_IP:-192.168.0.134},nolock,soft,rw
+
+networks:
+  rm-sync-network:
+    driver: bridge
+    name: rm-sync-network
