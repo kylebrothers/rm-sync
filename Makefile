@@ -26,11 +26,9 @@ setup:
 		echo "Creating .env from .env.example..."; \
 		cp .env.example .env; \
 		JWT=$$(openssl rand -base64 32 | tr -d '\n'); \
-		# Use | as sed delimiter since base64 may contain / \
 		sed -i.bak "s|^JWT_SECRET_KEY=.*|JWT_SECRET_KEY=$$JWT|" .env && rm .env.bak; \
 		echo ".env created. Now edit it to fill in:"; \
-		echo "  - CF_API_TOKEN (Cloudflare API token, Zone:DNS:Edit)"; \
-		echo "  - ACME_EMAIL   (your email)"; \
+		echo "  - ACME_EMAIL   (your email for Let's Encrypt notices)"; \
 		echo "Then run: make up"; \
 	else \
 		echo ".env already exists; leaving it alone."; \
