@@ -8,7 +8,8 @@ global:
 log:
   level: INFO
 
-# Entry points: HTTP redirects to HTTPS; HTTPS terminates TLS.
+# Entry points: HTTP serves the ACME challenge and redirects everything else
+# to HTTPS; HTTPS terminates TLS.
 entryPoints:
   web:
     address: ":80"
@@ -28,20 +29,18 @@ providers:
     exposedByDefault: false
     network: rm-sync-network
 
-# Let's Encrypt via Cloudflare DNS-01 challenge.
+# Let's Encrypt via HTTP-01 challenge on the `web` entry point.
+# Inbound port 80 reaches us via the nginx front proxy on the MediaWiki host,
+# which forwards Host: remarkable.brothersbrothers.net to this host.
 # CA endpoint and email are provided via environment variables.
 certificatesResolvers:
-  cloudflare:
+  letsencrypt:
     acme:
       email: "{{ env "ACME_EMAIL" }}"
       caServer: "{{ env "ACME_CA" }}"
       storage: /letsencrypt/acme.json
-      dnsChallenge:
-        provider: cloudflare
-        # Use Cloudflare's resolvers to avoid propagation issues with local DNS.
-        resolvers:
-          - "1.1.1.1:53"
-          - "1.0.0.1:53"
+      httpChallenge:
+        entryPoint: web
 
 # Dashboard intentionally disabled.
 api:
