@@ -1,7 +1,7 @@
 services:
 
   traefik:
-    image: traefik:v3.7.5
+    image: traefik:v3.7
     container_name: rm-sync-traefik
     restart: unless-stopped
     ports:
