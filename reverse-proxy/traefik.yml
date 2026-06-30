@@ -36,8 +36,6 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "{{ env "ACME_EMAIL" }}"
-      caServer: "{{ env "ACME_CA" }}"
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web
