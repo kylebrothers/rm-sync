@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
 
   traefik:
@@ -10,8 +8,8 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - ACME_EMAIL=${ACME_EMAIL}
-      - ACME_CA=${ACME_CA}
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL}
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_CASERVER=${ACME_CA}
     volumes:
       - ./reverse-proxy/traefik.yml:/etc/traefik/traefik.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
