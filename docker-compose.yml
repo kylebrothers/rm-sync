@@ -47,9 +47,9 @@ volumes:
       o: nfsvers=4,addr=${NAS_IP:-192.168.0.134},nolock,soft,rw
   traefik_certs:
     driver_opts:
-      type: nfs
-      device: ":/Docker/rm-sync/traefik-certs"
-      o: nfsvers=4,addr=${NAS_IP:-192.168.0.134},nolock,soft,rw
+      type: none
+      device: /var/lib/rm-sync/traefik-certs
+      o: bind
 
 networks:
   rm-sync-network:
