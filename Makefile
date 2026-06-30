@@ -1,8 +1,12 @@
 # Makefile for rm-sync
 # Phase: cloud backend (Traefik + rmfakecloud)
 
+ACME_PROD := https://acme-v02.api.letsencrypt.org/directory
+ACME_STAGING := https://acme-staging-v02.api.letsencrypt.org/directory
+
 .PHONY: help setup build up down restart logs logs-traefik logs-rmfakecloud \
-        shell-traefik shell-rmfakecloud status clean start switch-prod
+        shell-traefik shell-rmfakecloud status clean start \
+        use-staging use-prod show-ca
 
 help:
 	@echo "rm-sync — available commands:"
@@ -19,7 +23,9 @@ help:
 	@echo "  status             - Show container status"
 	@echo "  clean              - Stop and remove containers + volumes"
 	@echo "  start              - setup + up"
-	@echo "  switch-prod        - Switch ACME_CA from staging to production in .env"
+	@echo "  show-ca            - Show the ACME CA currently set in .env"
+	@echo "  use-staging        - Point ACME_CA at Let's Encrypt staging"
+	@echo "  use-prod           - Point ACME_CA at Let's Encrypt production"
 
 setup:
 	@if [ ! -f .env ]; then \
@@ -69,13 +75,41 @@ status:
 
 clean:
 	docker compose down -v
-	@echo "Containers and named volumes removed. NFS data on NAS is untouched."
+	@echo "Containers and named volumes removed."
+	@echo "Local cert dir (/var/lib/rm-sync/traefik-certs) and NAS data are untouched."
 
 start: setup up
 
-switch-prod:
+# ---- ACME CA management ----
+#
+# Switching between staging and production requires clearing the stored ACME
+# account state (acme.json), because the account is tied to the CA that
+# registered it. The targets below print the cleanup commands rather than run
+# them, so destructive actions stay explicit.
+
+show-ca:
 	@if [ ! -f .env ]; then echo "No .env found; run 'make setup' first."; exit 1; fi
-	@sed -i.bak "s|^ACME_CA=.*|ACME_CA=https://acme-v02.api.letsencrypt.org/directory|" .env && rm .env.bak
-	@echo "Switched ACME_CA to production. Now run:"
-	@echo "  make down && docker volume rm rm-sync_traefik_certs && make up"
-	@echo "(Removing the cert volume forces re-issuance against the production CA.)"
+	@grep ^ACME_CA= .env
+
+use-staging:
+	@if [ ! -f .env ]; then echo "No .env found; run 'make setup' first."; exit 1; fi
+	@sed -i.bak "s|^ACME_CA=.*|ACME_CA=$(ACME_STAGING)|" .env && rm .env.bak
+	@echo "ACME_CA set to STAGING."
+	@echo ""
+	@echo "To apply the change and force a fresh staging cert, run:"
+	@echo "  make down"
+	@echo "  sudo rm -f /var/lib/rm-sync/traefik-certs/acme.json"
+	@echo "  make up"
+
+use-prod:
+	@if [ ! -f .env ]; then echo "No .env found; run 'make setup' first."; exit 1; fi
+	@sed -i.bak "s|^ACME_CA=.*|ACME_CA=$(ACME_PROD)|" .env && rm .env.bak
+	@echo "ACME_CA set to PRODUCTION."
+	@echo ""
+	@echo "To apply the change and force a fresh production cert, run:"
+	@echo "  make down"
+	@echo "  sudo rm -f /var/lib/rm-sync/traefik-certs/acme.json"
+	@echo "  make up"
+	@echo ""
+	@echo "WARNING: Production has tight rate limits (5 duplicate certs/week)."
+	@echo "Only re-issue when necessary."
